@@ -1,0 +1,31 @@
+# Secrets
+.env
+kaggle.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Editor settings and private notes (draft plan, work log)
+.idea/
+.vscode/
+worklog.md
+
+# Data is never committed: raw exports, interim tables, translations
+data/
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.xlsx
+*.xml
+*.zip
+*.7z
+*.gz
+
+# Run logs (contain source text and model outputs)
+logs/
+*.log
+failed_qids.txt
