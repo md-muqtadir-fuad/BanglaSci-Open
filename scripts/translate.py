@@ -54,12 +54,12 @@ LOG_ROOT = ROOT / "logs"
 LOG_DIR = LOG_ROOT / "translation"
 MAX_CONSECUTIVE_FAILURES = 3  # stop instead of burning quota when the API keeps failing
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"  # v1 added the English term in brackets on first use
 PROMPT_TEMPLATE = """Translate this science question from English to Bengali.
 
 Rules:
 - Natural standard Bangladeshi Bengali (পানি, not জল). Translate meaning, not word for word.
-- Scientific terms as in Bangladeshi textbooks and the Bangla Academy dictionary. On first use, add the English term in brackets: আপেক্ষিক তাপ (specific heat).
+- Scientific terms as in Bangladeshi textbooks and the Bangla Academy dictionary. If a term has no Bengali translation, transliterate it into Bengali script: quark → কোয়ার্ক, DNA → ডিএনএ.
 - Keep numbers, units, formulas, symbols, LaTeX ($...$), URLs, line breaks and list markers unchanged.
 - Names of people and places in Bengali script: নিউটন, আইনস্টাইন.
 - Do NOT answer. Do NOT add, remove or explain anything.
@@ -212,7 +212,12 @@ def main():
     load_dotenv(ROOT / ".env")
     args = parse_args()
     rows = select(read_csv(args.input), args)
-    done = {r["qid"] for r in read_csv(args.output)} if args.output.exists() else set()
+    existing = read_csv(args.output) if args.output.exists() else []
+    other_prompts = {r["prompt_id"] for r in existing} - {PROMPT_ID}
+    if other_prompts:  # never mix prompt versions in one file
+        sys.exit(f"{args.output} has rows from another prompt ({', '.join(sorted(other_prompts))}); "
+                 f"current prompt is {PROMPT_ID}. Use a new --output or move that file.")
+    done = {r["qid"] for r in existing}
     todo = [r for r in rows if r["qid"] not in done]
     print(f"selected {len(rows)}, already translated {len(rows) - len(todo)}, to do {len(todo)}")
     if args.dry_run:
